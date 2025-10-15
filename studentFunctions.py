@@ -1,18 +1,8 @@
-No problem! I'll resend the complete and corrected code for studentFunctions.py. The non-code text has been removed, so this version is ready to copy and paste directly into your file.
-
-Save this as studentFunctions.py.
-
-Python
-
-# studentFunctions.py
-
 import tkinter as tk
 from tkinter import ttk, messagebox
 import random
-
-class StudentInterface(tk.Toplevel):
+class StudentFunctions(tk.Toplevel):
     """The student interface for selecting and taking a quiz."""
-    
     def __init__(self, master, db_manager):
         super().__init__(master)
         self.title("Student - Take Quiz")
@@ -93,19 +83,21 @@ class StudentInterface(tk.Toplevel):
             widget.destroy()
 
         current_q = self.current_questions[self.question_index]
-        
+        print(current_q)
+        print(type(current_q))
         # --- Question Display ---
+        print(q)
         q_label = ttk.Label(self.quiz_frame, 
-                            text=f"Question {self.question_index + 1}/{len(self.current_questions)}:\n\n{current_q['question']}", 
+                            text=f"Question {self.question_index + 1}/{len(self.current_questions)}:\n\n{current_q['Question_text']}", 
                             font=('Arial', 12), wraplength=650, justify=tk.LEFT)
         q_label.pack(pady=20, anchor='w')
 
         # --- Options ---
         options = [
-            ('A', current_q['option_a']), 
-            ('B', current_q['option_b']), 
-            ('C', current_q['option_c']), 
-            ('D', current_q['option_d'])
+            ('A', current_q['option_A']), 
+            ('B', current_q['option_B']), 
+            ('C', current_q['option_C']), 
+            ('D', current_q['option_D'])
         ]
         
         self.selected_answer.set("") # Clear previous selection

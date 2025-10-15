@@ -3,9 +3,11 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-# Helper class for editing a question in a separate window
+ADMIN_PASSWORD = "admin" 
+
 class EditQuestionPopup(tk.Toplevel):
-    def __init__(self, parent, db_manager, course_name, question_data, refresh_callback):
+    """Popup window for editing a question."""
+def __init__(self, parent, db_manager, course_name, question_data, refresh_callback):
         super().__init__(parent)
         self.title("Edit Question")
         self.geometry("500x550")
@@ -47,7 +49,7 @@ class EditQuestionPopup(tk.Toplevel):
 
         ttk.Button(form_frame, text="Save Changes", command=self.submit_update).grid(row=len(labels), column=0, columnspan=2, pady=15)
         
-    def submit_update(self):
+def submit_update(self):
         """Collects form data and calls the DB manager to update the question."""
         
         # Get data from widgets
@@ -66,8 +68,8 @@ class EditQuestionPopup(tk.Toplevel):
             messagebox.showerror("Input Error", "All fields must be filled.")
             return
         if question_data['correct_answer_key'] not in ['A', 'B', 'C', 'D']:
-             messagebox.showerror("Input Error", "Correct Answer must be A, B, C, or D.")
-             return
+            messagebox.showerror("Input Error", "Correct Answer must be A, B, C, or D.")
+            return
 
         # Format the correct_answer string to match the column data (e.g., "A) Option A Text")
         key_to_text = {
@@ -84,6 +86,10 @@ class EditQuestionPopup(tk.Toplevel):
             self.destroy() # Close the pop-up
         else:
             messagebox.showerror("Error", "Failed to update question.")
+
+# -------------------------------------------------------------------------------
+
+# --- CLASS 2: ViewEditQuestions (Frame for showing the list of questions) ---
 
 class ViewEditQuestions(ttk.Frame):
     """Admin frame for displaying, editing, and deleting questions."""
@@ -205,6 +211,9 @@ class ViewEditQuestions(ttk.Frame):
             else:
                 messagebox.showerror("Error", "Failed to delete question.")
 
+# -------------------------------------------------------------------------------
+
+# --- CLASS 3: AddQuestionFrame (Frame for adding a new question) ---
 
 class AddQuestionFrame(ttk.Frame):
     """Admin frame for adding a new question."""
@@ -269,8 +278,8 @@ class AddQuestionFrame(ttk.Frame):
             messagebox.showerror("Input Error", "All fields must be filled.")
             return
         if question_data['correct_answer_key'] not in ['A', 'B', 'C', 'D']:
-             messagebox.showerror("Input Error", "Correct Answer must be A, B, C, or D.")
-             return
+            messagebox.showerror("Input Error", "Correct Answer must be A, B, C, or D.")
+            return
 
         # Format correct_answer string (e.g., "A) Option A Text")
         key_to_text = {
@@ -293,15 +302,20 @@ class AddQuestionFrame(ttk.Frame):
         else:
             messagebox.showerror("Error", "Failed to add question to database.")
 
+# -------------------------------------------------------------------------------
 
-class AdminInterface(tk.Toplevel):
+# --- CLASS 4: AdminFunctions (The main imported Toplevel for the admin interface) ---
+
+class AdminFunctions(tk.Toplevel):
     """The main Toplevel window for the Admin user."""
     
+    # NOTE: The __init__ MUST take 'master' and 'db_manager' when called from main_app.py
     def __init__(self, master, db_manager):
         super().__init__(master)
         self.title("Admin - Quiz Content Management")
         self.geometry("1000x700")
         self.db_manager = db_manager
+        
         # Ensure the main app resurfaces when this window closes
         self.protocol("WM_DELETE_WINDOW", self.on_close) 
 
@@ -348,6 +362,14 @@ class AdminInterface(tk.Toplevel):
     def show_add_question_frame(self):
         self.add_question_frame.load_courses() # Load courses before showing the frame
         self.add_question_frame.tkraise()
+
+
+
+
+
+
+
+
 
 
 

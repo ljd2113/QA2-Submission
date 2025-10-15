@@ -5,26 +5,24 @@ def create_and_populate_db(db_name="ljdialQuizDB.db"):
     Creates an SQLite database file with four tables and populates them
     with multiple-choice questions.
     """
+    conn = None # Initialize conn to None for the finally block
     try:
         # Connect to the database file (it will be created if it doesn't exist)
         conn = sqlite3.connect(db_name)
         cursor = conn.cursor()
 
-        # Define the structure for all tables
-        # All tables will have the same columns:
-        # id (INTEGER PRIMARY KEY), question (TEXT), option_a (TEXT),
-        # option_b (TEXT), option_c (TEXT), option_d (TEXT), correct_answer (TEXT)
+        # Define the structure for all tables using the CORRECTED COLUMN NAMES
         table_schema = """
-        CREATE TABLE IF NOT EXISTS {} (
-            id INTEGER PRIMARY KEY,
-            question TEXT NOT NULL,
-            option_a TEXT NOT NULL,
-            option_b TEXT NOT NULL,
-            option_c TEXT NOT NULL,
-            option_d TEXT NOT NULL,
-            correct_answer TEXT NOT NULL
-        );
-        """
+CREATE TABLE IF NOT EXISTS {} (
+    id INTEGER PRIMARY KEY,
+    question_text TEXT NOT NULL,  
+    option_a TEXT NOT NULL,
+    option_b TEXT NOT NULL,
+    option_c TEXT NOT NULL,
+    option_d TEXT NOT NULL,
+    correct_option TEXT NOT NULL
+);
+"""
         
         # Table names
         tables = [
@@ -36,7 +34,7 @@ def create_and_populate_db(db_name="ljdialQuizDB.db"):
 
         # Create the tables
         for table_name in tables:
-            # Use a slightly modified name for SQL to avoid spaces and issues
+            # Replace spaces with underscores for SQL
             sql_table_name = table_name.replace(" ", "_")
             cursor.execute(table_schema.format(sql_table_name))
             print(f"Table '{sql_table_name}' created successfully.")
@@ -101,11 +99,12 @@ def create_and_populate_db(db_name="ljdialQuizDB.db"):
 
         # --- Insert Data ---
 
-        # Helper function for inserting data
+        # The correct helper function for inserting data
         def insert_data(table_name, data):
+            # This SQL INSERT statement uses the CORRECTED COLUMN NAMES
             sql_insert = f"""
             INSERT INTO {table_name} 
-            (question, option_a, option_b, option_c, option_d, correct_answer) 
+            (question_text, option_a, option_b, option_c, option_d, correct_option) 
             VALUES (?, ?, ?, ?, ?, ?);
             """
             cursor.executemany(sql_insert, data)
@@ -119,7 +118,7 @@ def create_and_populate_db(db_name="ljdialQuizDB.db"):
 
         # Commit the changes and close the connection
         conn.commit()
-        print("\nDatabase creation and population complete!")
+        print("\nDatabase creation and population complete! 🥳")
         print(f"File '{db_name}' has been successfully created.")
 
     except sqlite3.Error as e:
@@ -128,5 +127,6 @@ def create_and_populate_db(db_name="ljdialQuizDB.db"):
         if conn:
             conn.close()
 
-# Execute the function to create the database
-create_and_populate_db()
+# This is the standard execution block and must be at the very bottom
+if __name__ == "__main__":
+    create_and_populate_db()

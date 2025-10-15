@@ -60,10 +60,10 @@ class DBManager:
             """
             cursor.execute(sql, (
                 question_data['question'],
-                question_data['option_a'],
-                question_data['option_b'],
-                question_data['option_c'],
-                question_data['option_d'],
+                question_data['option_A'],
+                question_data['option_B'],
+                question_data['option_C'],
+                question_data['option_D'],
                 question_data['correct_answer']
             ))
             conn.commit()
@@ -104,10 +104,10 @@ class DBManager:
             """
             cursor.execute(sql, (
                 question_data['question'],
-                question_data['option_a'],
-                question_data['option_b'],
-                question_data['option_c'],
-                question_data['option_d'],
+                question_data['option_A'],
+                question_data['option_B'],
+                question_data['option_C'],
+                question_data['option_D'],
                 question_data['correct_answer'],
                 question_data['id']
             ))

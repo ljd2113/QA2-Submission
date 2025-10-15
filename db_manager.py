@@ -55,7 +55,7 @@ class DBManager:
         try:
             sql = f"""
             INSERT INTO {table_name} 
-            (question, option_a, option_b, option_c, option_d, correct_answer) 
+            (question, option_A, option_B, option_C, option_D, correct_answer) 
             VALUES (?, ?, ?, ?, ?, ?);
             """
             cursor.execute(sql, (
@@ -98,8 +98,8 @@ class DBManager:
         try:
             sql = f"""
             UPDATE {table_name} SET
-            question = ?, option_a = ?, option_b = ?, option_c = ?, 
-            option_d = ?, correct_answer = ?
+            question = ?, option_A = ?, option_B = ?, option_C = ?, 
+            option_D = ?, correct_answer = ?
             WHERE id = ?;
             """
             cursor.execute(sql, (

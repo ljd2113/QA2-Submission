@@ -16,10 +16,10 @@ def create_and_populate_db(db_name="ljdialQuizDB.db"):
 CREATE TABLE IF NOT EXISTS {} (
     id INTEGER PRIMARY KEY,
     question_text TEXT NOT NULL,  
-    option_a TEXT NOT NULL,
-    option_b TEXT NOT NULL,
-    option_c TEXT NOT NULL,
-    option_d TEXT NOT NULL,
+    option_A TEXT NOT NULL,
+    option_B TEXT NOT NULL,
+    option_C TEXT NOT NULL,
+    option_D TEXT NOT NULL,
     correct_option TEXT NOT NULL
 );
 """
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS {} (
             # This SQL INSERT statement uses the CORRECTED COLUMN NAMES
             sql_insert = f"""
             INSERT INTO {table_name} 
-            (question_text, option_a, option_b, option_c, option_d, correct_option) 
+            (question_text, option_A, option_B, option_C, option_D, correct_option) 
             VALUES (?, ?, ?, ?, ?, ?);
             """
             cursor.executemany(sql_insert, data)

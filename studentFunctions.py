@@ -1,183 +1,196 @@
+# StudentFunctions.py
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 import random
 class StudentFunctions(tk.Toplevel):
-    """The student interface for selecting and taking a quiz."""
-    def __init__(self, master, db_manager):
+    """
+    A Toplevel window for the student quiz-taking interface.
+    Handles course selection, question display, answer submission, and scoring.
+    """
+    def __init__(self, master, db_manager, on_close_callback):
         super().__init__(master)
         self.title("Student - Take Quiz")
-        self.geometry("700x500")
+        self.geometry("800x600")
         self.db_manager = db_manager
+        
+        # Store the callback method provided by the main application
+        self.on_close_callback = on_close_callback 
+        # Crucial: Ensures clicking the 'X' button calls our custom close handler
         self.protocol("WM_DELETE_WINDOW", self.on_close) 
 
-        self.all_courses = self.db_manager.get_all_table_names()
+        # NOTE: Assumes db_manager.get_all_table_names() returns a list of course names/table names
+        self.course_names = self.db_manager.get_all_table_names()
         
-        # Quiz state variables
         self.current_questions = []
         self.question_index = 0
         self.score = 0
-        self.selected_answer = tk.StringVar()
-
-        self.create_widgets()
-
-    def on_close(self):
-        """Called when the student window is closed."""
-        self.master.deiconify()
-        self.destroy()
-
-    def create_widgets(self):
-        # --- Welcome/Selection Screen ---
-        self.welcome_frame = ttk.Frame(self, padding="20")
-        self.welcome_frame.pack(fill='both', expand=True)
-
-        ttk.Label(self.welcome_frame, text="Select a Quiz Category", font=('Arial', 18, 'bold')).pack(pady=20)
+        self.selected_answer = tk.StringVar() 
         
-        # Course Selection
+        self.create_selection_frame()
+
+    def create_selection_frame(self):
+        """Creates the initial screen for selecting a course/quiz."""
+        for widget in self.winfo_children():
+            widget.destroy()
+
+        main_frame = ttk.Frame(self, padding="20")
+        main_frame.pack(expand=True, fill='both')
+
+        ttk.Label(main_frame, text="Select a Course to Start the Quiz:", font=('Arial', 18, 'bold')).pack(pady=20)
+        
         self.course_var = tk.StringVar(self)
-        self.course_var.set("Choose Course") 
-        
-        # Dropdown for category selection
-        course_menu = ttk.Combobox(self.welcome_frame, textvariable=self.course_var, 
-                                   values=self.all_courses, state="readonly", width=40)
-        course_menu.pack(pady=10)
+        if self.course_names:
+            self.course_var.set(self.course_names[0])
+        else:
+            ttk.Label(main_frame, text="No quizzes available.", fg='red').pack()
+            ttk.Button(main_frame, text="Back to Main Menu", command=self.on_close).pack(pady=15)
+            return
 
-        ttk.Button(self.welcome_frame, text="Start Quiz", command=self.start_quiz).pack(pady=20)
-        ttk.Button(self.welcome_frame, text="Back to Login", command=self.on_close).pack(pady=10)
-
-        # --- Quiz Frame (will be displayed later) ---
-        self.quiz_frame = ttk.Frame(self, padding="20")
+        course_combobox = ttk.Combobox(main_frame, textvariable=self.course_var, 
+                                       values=self.course_names, state="readonly", width=40)
+        course_combobox.pack(pady=10)
         
+        ttk.Button(main_frame, text="Start Quiz", command=self.start_quiz, width=20).pack(pady=15)
+        ttk.Button(main_frame, text="Back to Main Menu", command=self.on_close, width=20).pack(pady=10)
+
     def start_quiz(self):
-        """Loads questions, shuffles them, and switches to the quiz frame."""
-        selected_course = self.course_var.get()
-        if selected_course not in self.all_courses:
-            messagebox.showerror("Error", "Please select a valid course to start the quiz.")
-            return
-            
-        # 1. Fetch and Shuffle Questions
-        self.current_questions = self.db_manager.get_all_questions(selected_course)
-        random.shuffle(self.current_questions)
-        
-        if not self.current_questions:
-            messagebox.showinfo("Quiz Empty", "No questions available for this course.")
+        """Fetches questions, shuffles them, and starts the quiz interface."""
+        course = self.course_var.get()
+        if not course:
+            messagebox.showerror("Error", "Please select a course.")
             return
 
-        # 2. Reset State
+        all_questions = self.db_manager.get_all_questions(course)
+        
+        if not all_questions:
+            messagebox.showinfo("Quiz", f"No questions found for {course}.")
+            self.create_selection_frame() 
+            return
+
+        random.shuffle(all_questions)
+        self.current_questions = all_questions[:10]
+        
         self.question_index = 0
         self.score = 0
         
-        # 3. Switch View
-        self.welcome_frame.pack_forget()
-        self.quiz_frame.pack(fill='both', expand=True)
+        self.create_quiz_frame()
         self.display_question()
-
-    def display_question(self):
-        """Displays the current question and its options."""
-        # Check if the quiz is over
-        if self.question_index >= len(self.current_questions):
-            self.show_results()
-            return
-
-        # Clear previous content
-        for widget in self.quiz_frame.winfo_children():
+        
+    def create_quiz_frame(self):
+        """Sets up the GUI layout for the quiz itself."""
+        for widget in self.winfo_children():
             widget.destroy()
+            
+        self.quiz_frame = ttk.Frame(self, padding="20")
+        self.quiz_frame.pack(expand=True, fill='both')
+        
+        self.question_display_frame = ttk.Frame(self.quiz_frame)
+        self.question_display_frame.pack(pady=10, fill='x')
 
+        btn_frame = ttk.Frame(self.quiz_frame)
+        btn_frame.pack(pady=20, fill='x')
+        
+        ttk.Button(btn_frame, text="Submit Answer", command=self.check_answer).pack(side=tk.LEFT, padx=10)
+        ttk.Button(btn_frame, text="Quit Quiz (Back to Main)", command=self.on_close).pack(side=tk.RIGHT, padx=10) 
+        
+    def display_question(self):
+        """Renders the current question and its options."""
+        
+        for widget in self.question_display_frame.winfo_children():
+            widget.destroy()
+            
         current_q = self.current_questions[self.question_index]
-        print(current_q)
-        print(type(current_q))
+        
         # --- Question Display ---
-        print(q)
-        q_label = ttk.Label(self.quiz_frame, 
-                            text=f"Question {self.question_index + 1}/{len(self.current_questions)}:\n\n{current_q['Question_text']}", 
-                            font=('Arial', 12), wraplength=650, justify=tk.LEFT)
+        q_label = ttk.Label(self.question_display_frame, 
+                            text=f"Question {self.question_index + 1}/{len(self.current_questions)}:\n\n{current_q['question_text']}",
+                            font=('Arial', 14), 
+                            wraplength=700, 
+                            justify=tk.LEFT)
         q_label.pack(pady=20, anchor='w')
 
-        # --- Options ---
-        options = [
-            ('A', current_q['option_A']), 
-            ('B', current_q['option_B']), 
-            ('C', current_q['option_C']), 
-            ('D', current_q['option_D'])
+        # --- Options (Fixed to display all choices) ---
+        options_data = [
+            current_q['option_A'],
+            current_q['option_B'],
+            current_q['option_C'],
+            current_q['option_D'],
         ]
         
-        self.selected_answer.set("") # Clear previous selection
+        # Shuffle options for variety
+        random.shuffle(options_data) 
         
-        for value, text in options:
-            # The value we store is the option text itself (e.g., "Microsoft Excel")
-            display_text = f"{value}) {text}"
-            rb = ttk.Radiobutton(self.quiz_frame, text=display_text, variable=self.selected_answer, 
-                                 value=text, command=self.enable_submit)
+        self.selected_answer.set("") # Clear previous selection
+
+        option_labels = ['A', 'B', 'C', 'D'] 
+        
+        for i, option_text in enumerate(options_data):
+            # The value stored in the StringVar will be the option's text
+            option_value = option_text.strip() 
+            
+            # The text displayed on the radio button is "A) Option Text"
+            display_text = f"{option_labels[i]}) {option_text}"
+            
+            rb = ttk.Radiobutton(self.question_display_frame, 
+                                 text=display_text, 
+                                 variable=self.selected_answer, 
+                                 value=option_value)
             rb.pack(pady=5, anchor='w')
 
-        # --- Submit/Next Button ---
-        self.submit_btn = ttk.Button(self.quiz_frame, text="Submit Answer", command=self.submit_answer, state=tk.DISABLED)
-        self.submit_btn.pack(pady=20)
-        
-        # --- Score Tracker ---
-        ttk.Label(self.quiz_frame, text=f"Current Score: {self.score}", foreground='blue').pack(side=tk.BOTTOM, pady=5)
-
-    def enable_submit(self):
-        """Enables the submit button once an option is selected."""
-        self.submit_btn.config(state=tk.NORMAL)
-
-    def submit_answer(self):
-        """Checks the answer, provides feedback, and moves to the next question."""
-        user_answer_text = self.selected_answer.get()
+    def check_answer(self):
+        """Checks the student's selected answer against the correct answer."""
+        selected = self.selected_answer.get().strip()
         current_q = self.current_questions[self.question_index]
-        correct_answer_formatted = current_q['correct_answer']
         
-        # Extract the correct option text from the formatted string (e.g., extracts "Option A Text" from "A) Option A Text")
-        try:
-            # Split by the first ')' and take the second part (the text)
-            correct_option_text = correct_answer_formatted.split(')', 1)[1].strip()
-        except IndexError:
-            # Fallback if data is corrupted, use the full formatted string
-            correct_option_text = correct_answer_formatted.strip()
-            
+        if not selected:
+            messagebox.showwarning("Warning", "Please select an answer before submitting.")
+            return
+
+        # Correct answer is stored as "A) Option Text". We extract the text part for comparison.
+        correct_answer_db_format = current_q['correct_answer'].strip()
+        correct_answer_text_only = correct_answer_db_format[3:].strip() # [3:] removes the 'A) ' or 'B) ' prefix
         
-        is_correct = (user_answer_text == correct_option_text)
+        is_correct = selected == correct_answer_text_only
 
-        # Disable the submit button and options after submission
-        self.submit_btn.config(state=tk.DISABLED)
-
-        # 1. Check Answer and Update Score
         if is_correct:
             self.score += 1
-            feedback_msg = "Correct! 🎉"
+            messagebox.showinfo("Result", "Correct!")
         else:
-            feedback_msg = f"Incorrect. The correct answer was: {correct_answer_formatted}"
-
-        # 2. Provide Immediate Feedback
-        messagebox.showinfo("Feedback", feedback_msg)
-
-        # 3. Move to Next Question
+            messagebox.showinfo("Result", f"Incorrect. The correct answer was: {current_q['correct_answer']}")
+            
         self.question_index += 1
-        self.display_question() 
+        self.next_question()
 
+    def next_question(self):
+        """Determines if there are more questions or if the quiz is over."""
+        if self.question_index < len(self.current_questions):
+            self.display_question()
+        else:
+            self.show_results()
+            
     def show_results(self):
-        """Displays the final score and an option to retake or exit."""
-        # Clear previous content
-        for widget in self.quiz_frame.winfo_children():
+        """Displays the final score and offers navigation. (STRUCTURED FOR ERROR RESISTANCE)"""
+        for widget in self.winfo_children():
             widget.destroy()
-
-        final_score = self.score
-        total_questions = len(self.current_questions)
+            
+        result_frame = ttk.Frame(self, padding="20")
+        result_frame.pack(expand=True, fill='both')
+        final_score_text = f"Quiz Finished!\n\nYour Score: {self.score} out of {len(self.current_questions)}"
         
-        ttk.Label(self.quiz_frame, text="Quiz Complete!", font=('Arial', 20, 'bold')).pack(pady=20)
-        ttk.Label(self.quiz_frame, text=f"Your Final Score: {final_score} out of {total_questions}", 
-                  font=('Arial', 16), foreground='green').pack(pady=10)
+        # --- ERROR-RESISTANT STRUCTURE (eliminates line break risk) ---
+        score_label = ttk.Label(
+            result_frame,
+            text=final_score_text,
+            font= ("Arial", 24, "bold")
+            ) 
+
+        # -----------------------------------------------------------------
         
-        ttk.Button(self.quiz_frame, text="Take Another Quiz", command=self.reset_and_return_to_selection).pack(pady=20)
-        ttk.Button(self.quiz_frame, text="Exit Application", command=self.on_close).pack(pady=10)
+        ttk.Button(result_frame, text="Take Another Quiz", command=self.create_selection_frame).pack(pady=10)
+        ttk.Button(result_frame, text="Back to Main Menu", command=self.on_close).pack(pady=10)
 
-    def reset_and_return_to_selection(self):
-        """Resets the quiz state and shows the welcome screen."""
-        self.quiz_frame.pack_forget()
-        self.welcome_frame.pack(fill='both', expand=True)
-        self.question_index = 0
-        self.score = 0
-
-
-
-
-
+    def on_close(self):
+        """Handles closing the Toplevel window and calling the main app callback."""
+        self.destroy() 
+        self.on_close_callback()

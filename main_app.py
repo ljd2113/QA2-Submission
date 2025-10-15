@@ -1,77 +1,96 @@
 # main_app.py
-
+from tkinter import simpledialog
 import tkinter as tk
-from db_manager import DBManager
-from AdminFunctions import AdminFunctions
-from StudentFunctions import StudentFunctions
+from db_manager import DBManager 
+from AdminFunctions import AdminFunctions 
+from StudentFunctions import StudentFunctions 
 from tkinter import messagebox
-import os # For checking if the database is set up
+import os 
 
-# Ensure the setup script (from the previous responses) is run at least once
-# If you don't have a separate setup script, you can include the logic here.
-# For now, let's assume the database is either created or will be created on first run.
-
-# --- Database Setup Check (Optional but Recommended) ---
-# To make this runnable, we assume the DB is either there or the setup 
-# code from the previous response is run before this, 
-# or you include that setup function here.
-# If you didn't save the setup script, you must run it before this!
+# --- Database Configuration ---
 DB_FILE = "ljdialQuizDB.db"
-if not os.path.exists(DB_FILE):
-    # This is a critical point. If the file is missing, the app will crash.
-    # To be safe, ensure the database creation script runs first.
-    messagebox.showerror("Setup Error", 
-                         f"Database file '{DB_FILE}' not found.\n"
-                         "Please run the database creation script once to set up the questions.")
-    exit()
-# ----------------------------------------------------
 
 class MainApplication:
+    """The main application window that handles role selection and database initialization."""
     def __init__(self, master):
         self.master = master
         self.master.title("Quiz System - Role Selection")
-        self.master.geometry("400x200")
+        self.master.minsize(400, 200) 
         self.master.resizable(False, False)
 
         # Initialize the DB Manager - shared by all parts of the application
+        # NOTE: DBManager must be available via import
         self.db_manager = DBManager(db_name=DB_FILE)
 
+        # Initial check for database file
+        if not os.path.exists(DB_FILE):
+            messagebox.showerror("Setup Error", 
+                                 f"Database file '{DB_FILE}' not found.\n"
+                                 "Please ensure the database creation script has been run.")
+            self.master.destroy() 
+            return
+
         self.create_role_selection_screen()
+        
+    def show_main_window(self):
+        """Method called by Toplevel windows to bring the main window back."""
+        self.master.deiconify() # Re-show the hidden window
+        self.master.lift()      # Bring it to the front
+        
+    def hide_main_window(self):
+        """Method to hide the main window when a sub-window opens."""
+        self.master.withdraw()
 
     def create_role_selection_screen(self):
         """Displays the choice between Admin and Student."""
-        tk.Label(self.master, text="Select Your Role:", font=('Arial', 16, 'bold')).pack(pady=20)
+        role_frame = tk.Frame(self.master)
+        role_frame.pack(pady=20, padx=20, expand=True) 
         
-        tk.Button(self.master, text="Start Quiz (Student)", 
-                  command=self.launch_student_quiz, 
-                  font=('Arial', 12), width=20, bg='#4CAF50', fg='white').pack(pady=5)
-                  
-        tk.Button(self.master, text="Admin: Edit Questions", 
-                  command=self.launch_admin_panel, 
-                  font=('Arial', 12), width=20, bg='#FF9800', fg='black').pack(pady=5)
+        tk.Label(role_frame, text="Select Your Role:", font=('Arial', 16, 'bold')).pack(pady=10)
+        
+        # --- STUDENT BUTTON ---
+        tk.Button(
+            role_frame, 
+            text="Start Quiz (Student)", 
+            command=self.launch_student_quiz, 
+            font=('Arial', 12), 
+            width=25, 
+            bg='#4CAF50', 
+            fg='white'
+        ).pack(pady=5)
+        
+        # --- ADMINISTRATOR BUTTON ---
+        tk.Button(
+            role_frame, 
+            text="Administrator", 
+            command=self.open_admin_login,
+            font=('Arial', 12), 
+            width=25, 
+            bg='#FF9900', 
+            fg='black'
+        ).pack(pady=5)
 
     def launch_student_quiz(self):
-        """Closes the current window and opens the Student Quiz interface."""
-        self.master.destroy() 
-        quiz_root = tk.Tk()
-        StudentFunctions(quiz_root, self.db_manager)
-        quiz_root.mainloop()
+        """Hides the main window and launches the Student Quiz interface."""
+        self.hide_main_window() 
+        # Pass the callback function (self.show_main_window) to StudentFunctions
+        StudentFunctions(self.master, self.db_manager, self.show_main_window) 
 
-    def launch_admin_panel(self):
-        """Closes the current window and opens the Admin interface."""
-        # A simple security check (in a real app, this would be a login screen)
+    def open_admin_login(self):
+        """Handles admin password prompt and launches Admin interface."""
+        ADMIN_PASSWORD = "admin" 
+        
         password = simpledialog.askstring("Admin Login", "Enter Admin Password:", show='*')
-        if password == "admin123": # Use a simple hardcoded password for testing
-            self.master.destroy() 
-            admin_root = tk.Tk()
-            AdminFunctions(admin_root, self.db_manager)
-            admin_root.mainloop()
-        else:
+        
+        if password == ADMIN_PASSWORD: 
+            self.hide_main_window() 
+            # Pass the callback function (self.show_main_window) to AdminFunctions
+            AdminFunctions(self.master, self.db_manager, self.show_main_window)
+        elif password is not None:
             messagebox.showerror("Login Failed", "Incorrect password.")
 
 
 if __name__ == "__main__":
-    # Ensure all required files are present and run the main app
     root = tk.Tk()
     app = MainApplication(root)
     root.mainloop()

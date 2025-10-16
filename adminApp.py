@@ -176,3 +176,5 @@ tk.Button(btn_frame, text="Clear Form", width=12, command=clear_form).grid(row=0
 on_course_change()
 
 root.mainloop()
+
+#completed adminApp.py

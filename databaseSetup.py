@@ -227,3 +227,5 @@ if __name__ == "__main__":
     create_and_populate_db()
     print("Database created and seeded at:", DB_DEFAULT_PATH)
     print("Counts:", count_questions())
+
+#Completed databaseSetup.py

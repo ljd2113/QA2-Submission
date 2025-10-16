@@ -148,3 +148,5 @@ tk.Button(frame, text="Submit Quiz", width=12, command=submit_quiz).pack(pady=6)
 render_question(idx)
 
 root.mainloop()
+
+#Completed student_quiz.py

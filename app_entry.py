@@ -93,3 +93,5 @@ pw_entry = None  # will be set in render_login_screen()
 render_login_screen()
 
 root.mainloop()
+
+#Completed app_entry.py
